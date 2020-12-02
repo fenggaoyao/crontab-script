@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/fenggaoyao/crontab-script/issues"
   },
-  "homepage": "https://github.com/fenggaoyao/crontab-script#readme"
+  "homepage": "https://github.com/fenggaoyao/crontab-script#readme",
+  "dependencies": {
+    "got": "^11.8.0",
+    "tough-cookie": "^4.0.0"
+  }
 }
