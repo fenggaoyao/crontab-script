@@ -1,16 +1,70 @@
 
 /*ziye
+
 本人github地址     https://github.com/ziye12/JavaScript 
 转载请备注个名字，谢谢
+
+11.25 增加 阅读时长上传，阅读金币，阅读随机金币
+11.25 修复翻倍宝箱不同时领取的问题.增加阅读金币判定
+11.25 修复阅读时长问题，阅读金币问题，请重新获取时长cookie
+11.26 随机金币只有一次，故去除，调整修复阅读金币问题，增加时长上传限制
+11.26 增加领取周时长奖励
+11.26 增加结束命令
+11.27 调整通知为，成功开启宝箱再通知
+11.28 修复错误
+11.29 更新 支持action.默认每天21点到21点20通知
+12.2 修复打卡问题
+12.3 缩短运行时间，由于企鹅读书版本更新.请手动进去看一次书
+12.3 调整推送时间为12点和24点左右
+
+⚠️cookie获取方法：
+
+进 https://m.q.qq.com/a/s/d3eacc70120b9a37e46bad408c0c4c2a  点我的   获取cookie
+
+进一本书 看 10秒以下 然后退出，获取阅读时长cookie，看书一定不能超过10秒
+
+可能某些页面会卡住，但是能获取到cookie，再注释cookie重写就行了！
+
+⚠️宝箱奖励为20分钟一次，自己根据情况设置定时，建议设置11分钟一次
+
+hostname=mqqapi.reader.qq.com
+
+############## 圈x
+
+#企鹅读书获取cookie
+https:\/\/mqqapi\.reader\.qq\.com\/mqq\/user\/init url script-request-header https://raw.githubusercontent.com/ziye12/JavaScript/master/Task/qqreads.js
+
+#企鹅读书获取时长cookie
+https:\/\/mqqapi\.reader\.qq\.com\/mqq\/addReadTimeWithBid? url script-request-header https://raw.githubusercontent.com/ziye12/JavaScript/master/Task/qqreads.js
+
+############## loon
+
+//企鹅读书获取cookie
+http-request https:\/\/mqqapi\.reader\.qq\.com\/mqq\/user\/init script-path=https://raw.githubusercontent.com/ziye12/JavaScript/master/Task/qqreads.js,requires-header=true, tag=企鹅读书获取cookie 
+
+//企鹅读书获取时长cookie
+http-request https:\/\/mqqapi\.reader\.qq\.com\/mqq\/addReadTimeWithBid? script-path=https://raw.githubusercontent.com/ziye12/JavaScript/master/Task/qqreads.js, requires-header=true, tag=企鹅读书获取时长cookie
+
+############## surge
+
+//企鹅读书获取cookie
+企鹅读书 = type=http-request,pattern=https:\/\/mqqapi\.reader\.qq\.com\/mqq\/user\/init,script-path=https://raw.githubusercontent.com/ziye12/JavaScript/master/Task/qqreads.js, requires-header=true
+
+//企鹅读书获取时长cookie
+企鹅读书 = type=http-request,pattern=https:\/\/mqqapi\.reader\.qq\.com\/mqq\/addReadTimeWithBid?,script-path=https://raw.githubusercontent.com/ziye12/JavaScript/master/Task/qqreads.js, requires-header=true
+
+
 */
 
 const jsname='企鹅读书'
 const $ = Env(jsname)
-// const notify = $.isNode() ? require('./sendNotify') : '';
-var tz=''
-var kz=''
+//const notify = $.isNode() ? require('./sendNotify') : '';
+var tz='';
+var kz='';
 var task='';
-var config=''
+var config='';
+
+var COOKIES_SPLIT='\n'  //自定义多cookie之间连接的分隔符，默认为\n换行分割，不熟悉的不要改动和配置，为了兼容本地node执行
 
 const logs = 0;   //0为关闭日志，1为开启
 const notifyInterval=3
@@ -18,95 +72,101 @@ const notifyInterval=3
 
 const dd=1//单次任务延迟,默认1秒
 const TIME=30//单次时长上传限制，默认5分钟
-const maxtime=20//每日上传时长限制，默认20小时
+const maxtime=12//每日上传时长限制，默认12小时
 const wktimess=1200//周奖励领取标准，默认1200分钟
 
-const qqreadhdArr=[
-  ' {"Accept":"*/*","Content-Type":"application/json","ywsession":"2h1kzkug43ifp4554tbfpt31qii0snq0","Cookie":"ywguid=702779275;ywkey=ywSypQeTvohB;platform=ios;channel=mqqmina;mpVersion=0.30.0","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
-  '{"Accept":"*/*","Content-Type":"application/json","ywsession":"ots34xdu7wtpdeqhe1mm68mr8evcuulj","Cookie":"ywguid=1924114809;ywkey=yw3tlz6fJDZS;platform=ios;channel=mqqmina;mpVersion=0.30.0","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
-  '{"Accept":"*/*","Content-Type":"application/json","ywsession":"xfufk71y9lpcpkxnym7l8hvspeoh23qn","Cookie":"ywguid=983061506;ywkey=ywvH5ClXFi5B;platform=ios;channel=mqqmina;mpVersion=0.30.0","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}'
-];
-const qqreadtimeurlArr=[
-    'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1131&refer=-1&bid=31370119&readTime=2202&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%222%22%3A%7B%22readTime%22%3A2202%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
-    'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1132&refer=-1&bid=26134185&readTime=2307&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A2307%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
-    'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1007&refer=-1&bid=27996332&readTime=4376&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A4376%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1'
 
-];
-const qqreadtimehdArr=[
-    '{"Accept":"*/*","Content-Type":"application/json","ywsession":"2h1kzkug43ifp4554tbfpt31qii0snq0","Cookie":"ywguid=702779275;ywkey=ywSypQeTvohB;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=044C764583111D8C918398791CD44944","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
-    '{"Accept":"*/*","Content-Type":"application/json","ywsession":"ots34xdu7wtpdeqhe1mm68mr8evcuulj","Cookie":"ywguid=1924114809;ywkey=yw3tlz6fJDZS;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=C8E5A408199C21B1E520F8EA97334014","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
-    '{"Accept":"*/*","Content-Type":"application/json","ywsession":"xfufk71y9lpcpkxnym7l8hvspeoh23qn","Cookie":"ywguid=983061506;ywkey=ywvH5ClXFi5B;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=ED2B73BDA9F7D308CACB600E2F7E2F2B","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}'
-];
+let  qqreadheaderVal = '',
+     qqreadtimeurlVal = '',
+    qqreadtimeheaderVal ='';
+
+    const qqreadhdArr=[
+      ' {"Accept":"*/*","Content-Type":"application/json","ywsession":"2h1kzkug43ifp4554tbfpt31qii0snq0","Cookie":"ywguid=702779275;ywkey=ywSypQeTvohB;platform=ios;channel=mqqmina;mpVersion=0.30.0","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
+      '{"Accept":"*/*","Content-Type":"application/json","ywsession":"ots34xdu7wtpdeqhe1mm68mr8evcuulj","Cookie":"ywguid=1924114809;ywkey=yw3tlz6fJDZS;platform=ios;channel=mqqmina;mpVersion=0.30.0","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
+      '{"Accept":"*/*","Content-Type":"application/json","ywsession":"xfufk71y9lpcpkxnym7l8hvspeoh23qn","Cookie":"ywguid=983061506;ywkey=ywvH5ClXFi5B;platform=ios;channel=mqqmina;mpVersion=0.30.0","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}'
+    ];
+    const qqreadtimeurlArr=[
+        'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1131&refer=-1&bid=31370119&readTime=2202&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%222%22%3A%7B%22readTime%22%3A2202%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
+        'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1132&refer=-1&bid=26134185&readTime=2307&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A2307%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
+        'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1007&refer=-1&bid=27996332&readTime=4376&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A4376%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1'
+    
+    ];
+    const qqreadtimehdArr=[
+        '{"Accept":"*/*","Content-Type":"application/json","ywsession":"2h1kzkug43ifp4554tbfpt31qii0snq0","Cookie":"ywguid=702779275;ywkey=ywSypQeTvohB;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=044C764583111D8C918398791CD44944","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
+        '{"Accept":"*/*","Content-Type":"application/json","ywsession":"ots34xdu7wtpdeqhe1mm68mr8evcuulj","Cookie":"ywguid=1924114809;ywkey=yw3tlz6fJDZS;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=C8E5A408199C21B1E520F8EA97334014","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
+        '{"Accept":"*/*","Content-Type":"application/json","ywsession":"xfufk71y9lpcpkxnym7l8hvspeoh23qn","Cookie":"ywguid=983061506;ywkey=ywvH5ClXFi5B;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=ED2B73BDA9F7D308CACB600E2F7E2F2B","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}'
+    ];
 
 
-let qqreadheaderVal = '', qqreadtimeurlVal = '', qqreadtimeheaderVal ='';
+
+
+
 let K = 0;
    all()
 function all(){
       qqreadheaderVal = qqreadhdArr[K];
       qqreadtimeurlVal = qqreadtimeurlArr[K];
       qqreadtimeheaderVal = qqreadtimehdArr[K];
-   for(var i=0;i<17;i++) { 
-(function(i) {
-setTimeout(function() {
-if (i==0)
-qqreadinfo();//用户名
+   for(var i=0;i<14;i++)
+ { (function(i) {
+            setTimeout(function() {
 
- else if (i==1)
+          if (i==0){
+qqreadinfo();//用户名 
+qqreadwktime();//周时长查询		  
 qqreadconfig();//时长查询
+}		    
 
-else if (i==2)
+else if (i==1)
 qqreadtask();//任务列表
-
-else if (i==3&&task.data.taskList[0].doneFlag==0)
-qqreadsign();//金币签到
-
-else if (i==4&&task.data.treasureBox.doneFlag==0)
-qqreadbox();//宝箱
-
-else if (i==5&&task.data.taskList[2].doneFlag==0)
-qqreadssr1();//阅读金币1
-
-else if (i==6&&config.data.pageParams.todayReadSeconds/3600<=maxtime)
+		    
+else if (i==2&&config.data.pageParams.todayReadSeconds/3600<=maxtime)
 qqreadtime();//上传时长
 
-else if (i==7&&task.data.taskList[0].doneFlag==0)
-qqreadtake();//阅豆签到
+else if (i==3&&task.data.taskList[1].doneFlag==0)
+qqreadssr1();//阅读金币1		    
+		    
+else if (i==4&&task.data.taskList[2].doneFlag==0){
+qqreadsign();//金币签到
+qqreadtake();//阅豆签到	  
+}
+			    
+else if (i==5&&task.data.treasureBox.doneFlag==0)
+qqreadbox();//宝箱
 
-else if (i==8&&task.data.taskList[1].doneFlag==0)
+else if (i==6&&task.data.taskList[0].doneFlag==0)
 qqreaddayread();//阅读任务
 
-else if (i==9&&task.data.taskList[2].doneFlag==0)
+else if (i==7&&task.data.taskList[1].doneFlag==0)
 qqreadssr2();//阅读金币2
 
-else if (i==10&&task.data.taskList[3].doneFlag==0)
-qqreadvideo();//视频任务
-
-else if(i==11&&task.data.taskList[0].doneFlag==0)
+else if (i==8)
+qqreadpick();//领周时长奖励	    
+		    
+else if (i==9&&task.data.taskList[3].doneFlag==0)
+qqreadvideo();//视频任务		    
+		    
+else if(i==10&&task.data.taskList[2].doneFlag==0)
 qqreadsign2();//签到翻倍
 
-else if (i==12&&task.data.treasureBox.videoDoneFlag==0)
+else if (i==11&&task.data.treasureBox.videoDoneFlag==0)
 qqreadbox2();//宝箱翻倍
 
-else if (i==13&&task.data.taskList[2].doneFlag==0)
+else if (i==12&&task.data.taskList[1].doneFlag==0)
 qqreadssr3();//阅读金币3
-
-else if (i==14)
-qqreadwktime();//周时长查询
-
-else if (i==15)
-qqreadpick();//领周时长奖励
 		 
-else if (i == 16 && K < qqreadhdArr.length - 1) {
+else if (i == 13 && K < qqreadhdArr.length - 1) {
 K += 1;
 all();
- } else if (i == 16 && K == qqreadhdArr.length - 1) {
+ } else if (i == 13 && K == qqreadhdArr.length - 1) {
 	 showmsg();//通知
 	 console.log(tz)  
-      $.done();
-}},
-  (i + 1) * dd * 1000
- );
+            $.done();
+          }
+        },
+
+        (i + 1) * dd * 1000
+      );
     })(i);
   }
 }
@@ -497,7 +557,7 @@ return new Promise((resolve, reject) => {
  url:`https://mqqapi.reader.qq.com/mqq/pickPackageInit`,
    headers: JSON.parse(qqreadheaderVal),   
     };
-if (wktime.data.readTime>=wktimess){
+if (wktime.data.readTime>=wktimess&&wktime.data.readTime<=1250){
     $.get(toqqreadpickurl,(error, response, data) =>{
      if(logs) $.log(`${jsname},周阅读时长奖励任务: ${data}`)
      pick =JSON.parse(data)
@@ -531,10 +591,10 @@ tz+='【周时长奖励'+(i+1)+'】:领取'+Packageid[i]+'阅豆\n'
 function showmsg() {      
 tz += `\n\n========= 脚本执行-北京时间(UTC+8)：${new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toLocaleString()} \n\n`;
 	
-let d = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
-// if (d.getHours()==21 && d.getMinutes()<=20 ) {
-//          notify.sendNotify(jsname,kz)
-//  }
+// let d = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
+// // if (d.getHours()==12 && d.getMinutes()<=20 ||d.getHours()==23 && d.getMinutes()>=40 ) {
+// //          notify.sendNotify(jsname,kz)
+// //  }
 	
 if (notifyInterval==1)
 $.msg(jsname,'',tz)//显示所有通知
