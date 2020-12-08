@@ -221,12 +221,12 @@ function qqreadtask() {
 // 更新
 function qqreadtrack() {
   return new Promise((resolve, reject) => {
-    const toqqreadtrackurl = {
-      url: "https://mqqapi.reader.qq.com/log/v4/mqq/track",
-
-      headers: JSON.parse(qqreadtimeheaderVal),
-	  body: qqreadbodyVal,      
-      timeout: 60000,
+    const body = qqreadbodyVal.replace(new RegExp(/"dis":[0-9]{13}/),`"dis":${new Date().getTime()}`) 
+    const toqqreadtrackurl = { 
+      url: "https://mqqapi.reader.qq.com/log/v4/mqq/track", 
+      headers: JSON.parse(qqreadtimeheaderVal), 
+   body: body,       
+      timeout: 60000, 
     };
     $.post(toqqreadtrackurl, (error, response, data) => {
       if (logs) $.log(`${jsname}, 更新: ${data}`);
@@ -245,9 +245,7 @@ function qqreadinfo() {
   return new Promise((resolve, reject) => {
     const toqqreadinfourl = {
       url: "https://mqqapi.reader.qq.com/mqq/user/init",
-
       headers: JSON.parse(qqreadtimeheaderVal),
-
       timeout: 60000,
     };
     $.get(toqqreadinfourl, (error, response, data) => {
@@ -272,7 +270,6 @@ function qqreadtake() {
     $.post(toqqreadtakeurl, (error, response, data) => {
       if (logs) $.log(`${jsname}, 阅豆签到: ${data}`);
       take = JSON.parse(data);
-
       if (take.data.takeTicket > 0) {
         tz += `【阅豆签到】:获得${take.data.takeTicket}豆\n`;
       }
@@ -574,13 +571,13 @@ function showmsg() {
     new Date().getTime() + 8 * 60 * 60 * 1000
   ).toLocaleString()} \n\n`;
 
-  // const d = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
-  // if (
-  //   (d.getHours() == 12 && d.getMinutes() <= 20) ||
-  //   (d.getHours() == 23 && d.getMinutes() >= 40)
-  // ) {
-  //   notify.sendNotify(jsname, kz);
-  // }
+  const d = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
+  if (
+    (d.getHours() == 12 && d.getMinutes() <= 20) ||
+    (d.getHours() == 23 && d.getMinutes() >= 40)
+  ) {
+    notify.sendNotify(jsname, kz);
+  }
 
   if (notifyInterval != 1) console.log(tz); // 无通知时，打印通知
 
