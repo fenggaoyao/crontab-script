@@ -12,6 +12,7 @@ from concurrent.futures import ProcessPoolExecutor
 class JdSeckill(object):
     def __init__(self):
         # 初始化信息
+        self.fail_num=0
         self.session = get_session()
         self.sku_id = global_config.getRaw('config', 'sku_id')
         self.seckill_num = 2
@@ -175,6 +176,7 @@ class JdSeckill(object):
         while True:
             resp = self.session.get(url=url, headers=headers, params=payload)
             resp_json = parse_json(resp.text)
+            logger.info("获取商品的抢购resp_json: %s",resp_json)
             if resp_json.get('url'):
                 # https://divide.jd.com/user_routing?skuId=8654289&sn=c3f4ececd8461f0e4d7267e96a91e0e0&from=pc
                 router_url = 'https:' + resp_json.get('url')
@@ -185,6 +187,9 @@ class JdSeckill(object):
                 logger.info("抢购链接获取成功: %s", seckill_url)
                 return seckill_url
             else:
+                self.fail_num=+1
+                if self.fail_num>10:
+                    sys.exit(1)
                 logger.info("抢购链接获取失败，稍后自动重试")
                 self.wait_some_time()
 

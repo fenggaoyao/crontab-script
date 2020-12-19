@@ -1,6 +1,6 @@
 import sys
 from jd_spider_requests import JdSeckill
-
+from timer import Timer
 
 if __name__ == '__main__':
     a = """
@@ -15,15 +15,16 @@ if __name__ == '__main__':
     `Y888P                                                                                                                                                  
                                                
 功能列表：                                                                                
- 1.预约商品
+ 1.预约商品 jd_seckill.reserve() 
  2.秒杀抢购商品
     """
     print(a)
 
     jd_seckill = JdSeckill()
+    time= Timer()
     choice_function = input('请选择:')
     if choice_function == '1':
-        jd_seckill.reserve()
+        time.start()
     elif choice_function == '2':
         jd_seckill.seckill_by_proc_pool()
     else:

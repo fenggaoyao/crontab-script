@@ -13,9 +13,14 @@ class Timer(object):
     def start(self):
         logger.info('正在等待到达设定时间:%s' % self.buy_time)
         now_time = datetime.now
-        while True:
-            if now_time() >= self.buy_time:
+        while True: 
+            diff=(self.buy_time-now_time()).seconds
+            if self.buy_time>now_time() and diff>60:
+                sleep=diff-60
+                logger.info('睡眠时间:%s' % sleep)
+                time.sleep(sleep)
+            elif now_time() >= self.buy_time:
                 logger.info('时间到达，开始执行……')
                 break
-            else:
+            else:                
                 time.sleep(self.sleep_interval)
