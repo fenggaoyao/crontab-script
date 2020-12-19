@@ -187,7 +187,7 @@ class JdSeckill(object):
                 logger.info("抢购链接获取成功: %s", seckill_url)
                 return seckill_url
             else:
-                self.fail_num=+1
+                self.fail_num+=1
                 if self.fail_num>10:
                     sys.exit(1)
                 logger.info("抢购链接获取失败，稍后自动重试")

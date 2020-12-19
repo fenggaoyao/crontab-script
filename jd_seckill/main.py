@@ -24,7 +24,7 @@ if __name__ == '__main__':
     time= Timer()
     choice_function = input('请选择:')
     if choice_function == '1':
-        time.start()
+        jd_seckill.reserve() 
     elif choice_function == '2':
         jd_seckill.seckill_by_proc_pool()
     else:
