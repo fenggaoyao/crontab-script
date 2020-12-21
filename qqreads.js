@@ -59,12 +59,15 @@ http-request https:\/\/mqqapi\.reader\.qq\.com\/mqq\/addReadTimeWithBid? script-
 
 const jsname = "企鹅读书";
 const $ = Env(jsname);
-// const notify = $.isNode() ? require("./sendNotify") : "";
+const notify = $.isNode() ? require("./sendNotify") : "";
 
 let tz = "";
 let kz = "";
 let task = "";
 let config = "";
+let K = 0;
+
+
 
 let COOKIES_SPLIT = "\n"; // 自定义多cookie之间连接的分隔符，默认为\n换行分割，不熟悉的不要改动和配置，为了兼容本地node执行
 
@@ -77,6 +80,9 @@ const TIME = 30; // 单次时长上传限制，默认5分钟
 const maxtime = 12; // 每日上传时长限制，默认12小时
 const wktimess = 1200; // 周奖励领取标准，默认1200分钟
 
+const d = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);//GITHUB
+const b = new Date(new Date().getTime());//手机
+
 
 let qqreadbodyVal = "";
 
@@ -85,103 +91,132 @@ let qqreadtimeurlVal = "";
 let qqreadtimeheaderVal = "";
 
 
+// const qqreadbdArr = [
+//  '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.4.17","os_ver":"iOS 14.2","mp_ver":"0.31.0","mpos_ver":"1.21.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"044C764583111D8C918398791CD44944","guid":702779275,"session":"ozvq20g8bnmh9wu5s5wv0jkngp5jfds5","scene":1131,"source":"wza0005wzb0004","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"bookStore_newCI_unit_C","click2":"homeTab_click_C","route":"pages/book-detail/index","refer":"pages/index/index","options":{"bid":"147574"},"dis":1607316085008,"ext6":107,"eventID":"bookDetail_I","type":"shown","bid":"147574","bookStatus":1,"bookPay":1,"from":"1131_147574"}]}',
+//  '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.4.17","os_ver":"iOS 14.2","mp_ver":"0.31.0","mpos_ver":"1.21.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"C8E5A408199C21B1E520F8EA97334014","guid":1924114809,"session":"voy24znar8vdt8rn5kqmeduio3m3209l","scene":1007,"source":"wza0005wzb0004","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"push_limitYes_suc_C","click2":-1,"route":"pages/money/index","refer":-1,"options":{"fromGuid":"1907854737","shareType":"303303","source":"wza0005wzb0004"},"dis":1607318069001,"ext6":20,"eventID":"onHide_O","type":"others","ui_pos":2}]}',
+//  '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.4.17","os_ver":"iOS 14.2","mp_ver":"0.31.0","mpos_ver":"1.21.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"ED2B73BDA9F7D308CACB600E2F7E2F2B","guid":983061506,"session":"leiw7441c2uxbpstdp6vnim1e7mjyy11","scene":1007,"source":"wza0005wzb0004","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"push_limitYes_suc_C","click2":-1,"route":"pages/money/index","refer":-1,"options":{"fromGuid":"1907854737","shareType":"303303","source":"wza0005wzb0004"},"dis":1607318240693,"ext6":10,"eventID":"onHide_O","type":"others","ui_pos":2}]}',
+//  '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.4.17","os_ver":"iOS 14.2","mp_ver":"0.31.0","mpos_ver":"1.21.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"4E396B9FCFC1A224F97DB350AB85ECD1","guid":2535838714,"session":"s11e5wy951b3d821hx33dw597luknq4e","scene":1007,"source":"wza0005wzb0004","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"push_limitYes_suc_C","click2":-1,"route":"pages/money/index","refer":-1,"options":{"fromGuid":"1907854737","shareType":"303303","source":"wza0005wzb0004"},"dis":1607318383466,"ext6":12,"eventID":"onHide_O","type":"others","ui_pos":2}]}'
+// ];
+
+// const qqreadtimeurlArr = [
+//   'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1131&refer=-1&bid=31370119&readTime=2202&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%222%22%3A%7B%22readTime%22%3A2202%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
+//   'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1132&refer=-1&bid=26134185&readTime=2307&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A2307%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
+//   'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1007&refer=-1&bid=27996332&readTime=4376&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A4376%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
+//   'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1007&refer=-1&bid=21841831&readTime=3980&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A3980%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1'
+
+// ];
+
+// const qqreadtimehdArr = [
+//   '{"Accept":"*/*","Content-Type":"application/json","ywsession":"2h1kzkug43ifp4554tbfpt31qii0snq0","Cookie":"ywguid=702779275;ywkey=ywSypQeTvohB;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=044C764583111D8C918398791CD44944","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
+//   '{"Accept":"*/*","Content-Type":"application/json","ywsession":"ots34xdu7wtpdeqhe1mm68mr8evcuulj","Cookie":"ywguid=1924114809;ywkey=yw3tlz6fJDZS;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=C8E5A408199C21B1E520F8EA97334014","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
+//   '{"Accept":"*/*","Content-Type":"application/json","ywsession":"xfufk71y9lpcpkxnym7l8hvspeoh23qn","Cookie":"ywguid=983061506;ywkey=ywvH5ClXFi5B;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=ED2B73BDA9F7D308CACB600E2F7E2F2B","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
+//   '{"Accept":"*/*","Content-Type":"application/json","ywsession":"o887lxxeb72p37rjizhgu2zepx1ssvze","Cookie":"ywguid=2535838714;ywkey=ywrNl1n80Xmb;platform=ios;channel=mqqmina;mpVersion=0.31.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=4E396B9FCFC1A224F97DB350AB85ECD1","mpversion":"0.31.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.31.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}'
+// ];
+
 const qqreadbdArr = [
- '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.4.17","os_ver":"iOS 14.2","mp_ver":"0.31.0","mpos_ver":"1.21.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"044C764583111D8C918398791CD44944","guid":702779275,"session":"ozvq20g8bnmh9wu5s5wv0jkngp5jfds5","scene":1131,"source":"wza0005wzb0004","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"bookStore_newCI_unit_C","click2":"homeTab_click_C","route":"pages/book-detail/index","refer":"pages/index/index","options":{"bid":"147574"},"dis":1607316085008,"ext6":107,"eventID":"bookDetail_I","type":"shown","bid":"147574","bookStatus":1,"bookPay":1,"from":"1131_147574"}]}',
- '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.4.17","os_ver":"iOS 14.2","mp_ver":"0.31.0","mpos_ver":"1.21.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"C8E5A408199C21B1E520F8EA97334014","guid":1924114809,"session":"voy24znar8vdt8rn5kqmeduio3m3209l","scene":1007,"source":"wza0005wzb0004","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"push_limitYes_suc_C","click2":-1,"route":"pages/money/index","refer":-1,"options":{"fromGuid":"1907854737","shareType":"303303","source":"wza0005wzb0004"},"dis":1607318069001,"ext6":20,"eventID":"onHide_O","type":"others","ui_pos":2}]}',
- '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.4.17","os_ver":"iOS 14.2","mp_ver":"0.31.0","mpos_ver":"1.21.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"ED2B73BDA9F7D308CACB600E2F7E2F2B","guid":983061506,"session":"leiw7441c2uxbpstdp6vnim1e7mjyy11","scene":1007,"source":"wza0005wzb0004","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"push_limitYes_suc_C","click2":-1,"route":"pages/money/index","refer":-1,"options":{"fromGuid":"1907854737","shareType":"303303","source":"wza0005wzb0004"},"dis":1607318240693,"ext6":10,"eventID":"onHide_O","type":"others","ui_pos":2}]}',
- '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.4.17","os_ver":"iOS 14.2","mp_ver":"0.31.0","mpos_ver":"1.21.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"4E396B9FCFC1A224F97DB350AB85ECD1","guid":2535838714,"session":"s11e5wy951b3d821hx33dw597luknq4e","scene":1007,"source":"wza0005wzb0004","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"push_limitYes_suc_C","click2":-1,"route":"pages/money/index","refer":-1,"options":{"fromGuid":"1907854737","shareType":"303303","source":"wza0005wzb0004"},"dis":1607318383466,"ext6":12,"eventID":"onHide_O","type":"others","ui_pos":2}]}'
+  '{"common":{"appid":1450024393,"areaid":5,"qq_ver":"8.4.18.4945","os_ver":"Android 10","mp_ver":"0.36.0","mpos_ver":"1.21.0","brand":"Redmi","model":"Redmi Note 8 Pro","screenWidth":393,"screenHeight":835,"windowWidth":393,"windowHeight":781,"openid":"044C764583111D8C918398791CD44944","guid":702779275,"session":"93q2fl5jag6d47k0x271wa3qe8exe1kh","scene":3003,"source":-1,"hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"qqauthorize_addRCS_succ_C","click2":"qqauthorize_addRCS_get_C","route":"pages/index/index","refer":-1,"options":{},"dis":1608518367815,"ext6":29,"eventID":"bookStore_I","type":"shown","eid":3}]}',
+  '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.5.0","os_ver":"iOS 14.2","mp_ver":"0.36.0","mpos_ver":"1.23.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"1762371855","guid":1762371855,"session":"y7v166m8hobomvpla00nn3ouu365i4vn","scene":1007,"source":"wza0005wzb0003","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"bookStore_topBar_tab_C","click2":"bookStore_newCl_nextPage_C","route":"pages/book-read/index","refer":"pages/index/index","options":{"bid":"20909208"},"dis":1608519882770,"ext6":19,"eventID":"bookRead_show_I","type":"shown","ccid":7,"bid":"20909208","bookStatus":0,"bookPay":1,"chapterStatus":0,"ext1":{"font":18,"bg":0,"pageMode":1},"stat_params":"{\"alg\":\"90.4.1\",\"expid\":10,\"exposetime\":\"1608456970\",\"logid\":\"8991371805138770739\",\"origin\":\"29089\",\"preitemid\":\"b_20909208\",\"scene\":\"tencent_feed_recommend\",\"tabtype\":\"2\",\"type\":\"0\",\"userdegree\":\"0\"}","from":"1007_20909208"}]}',
+  '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.5.0","os_ver":"iOS 14.2","mp_ver":"0.36.0","mpos_ver":"1.23.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"C8E5A408199C21B1E520F8EA97334014","guid":1924114809,"session":"uwvdv4rkrrgbk4q21f7x7170cugdcdwt","scene":1007,"source":"wza0005wzb0003","hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"push_limitYes_suc_C","click2":-1,"route":"pages/book-read/index","refer":-1,"options":{"fromGuid":"51530556","shareType":"303","source":"wza0005wzb0003","bid":"20909208"},"dis":1608521379073,"ext6":3,"eventID":"bookRead_show_I","type":"shown","ccid":4,"bid":"20909208","bookStatus":0,"bookPay":1,"chapterStatus":0,"ext1":{"font":18,"bg":0,"pageMode":1},"stat_params":"{\"alg\":\"90.4.1\",\"expid\":10,\"exposetime\":\"1608312152\",\"logid\":\"7729076306793918860\",\"origin\":\"29089\",\"preitemid\":\"b_20909208\",\"scene\":\"tencent_feed_recommend\",\"tabtype\":\"2\",\"type\":\"0\",\"userdegree\":\"0\"}","from":"1007_20909208"}]}',
+  '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.5.0","os_ver":"iOS 14.2","mp_ver":"0.36.0","mpos_ver":"1.23.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"4E396B9FCFC1A224F97DB350AB85ECD1","guid":2535838714,"session":"u49chxposv1wmfup5qkhy7trydn3m7f6","scene":1132,"source":-1,"hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"push_limitYes_suc_C","click2":-1,"route":"pages/book-read/index","refer":-1,"options":{"bid":"25304258"},"dis":1608521887597,"ext6":3,"eventID":"bookRead_show_I","type":"shown","ccid":1,"bid":"25304258","bookStatus":1,"bookPay":0,"chapterStatus":0,"ext1":{"font":18,"bg":0,"pageMode":1},"from":"1132_25304258"}]}',
+  '{"common":{"appid":1450024394,"areaid":5,"qq_ver":"8.5.0","os_ver":"iOS 14.2","mp_ver":"0.36.0","mpos_ver":"1.23.0","brand":"iPhone","model":"iPad 6 (WiFi)<iPad7,5>","screenWidth":768,"screenHeight":1024,"windowWidth":768,"windowHeight":974,"openid":"ED2B73BDA9F7D308CACB600E2F7E2F2B","guid":983061506,"session":"7a8uci3j6fdypxo5cwqvca7skpr5fz49","scene":1132,"source":-1,"hasRedDot":"false","missions":-1,"caseID":-1},"dataList":[{"click1":"push_limitYes_suc_C","click2":-1,"route":"pages/book-read/index","refer":-1,"options":{"bid":"21058239"},"dis":1608522040803,"ext6":3,"eventID":"bookRead_show_I","type":"shown","ccid":3,"bid":"21058239","bookStatus":0,"bookPay":1,"chapterStatus":0,"ext1":{"font":18,"bg":0,"pageMode":1},"from":"1132_21058239"}]}'
+
 ];
 
 const qqreadtimeurlArr = [
-  'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1131&refer=-1&bid=31370119&readTime=2202&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%222%22%3A%7B%22readTime%22%3A2202%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
-  'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1132&refer=-1&bid=26134185&readTime=2307&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A2307%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
-  'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1007&refer=-1&bid=27996332&readTime=4376&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A4376%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
-  'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1007&refer=-1&bid=21841831&readTime=3980&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A3980%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1'
-
+  'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=3003&refer=-1&bid=122264&readTime=2651&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A2651%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
+  'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1007&refer=-1&bid=26878703&readTime=2229&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A2229%2C%22pay_status%22%3A0%2C%22is_tail%22%3A1%7D%7D%5D&sp=-1',
+  'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1007&refer=-1&bid=20026121&readTime=5073&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A5073%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
+  'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1007&refer=-1&bid=25304258&readTime=2944&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%221%22%3A%7B%22readTime%22%3A2944%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1',
+  'https://mqqapi.reader.qq.com/mqq/addReadTimeWithBid?scene=1132&refer=-1&bid=21058239&readTime=3770&read_type=0&conttype=1&read_status=0&chapter_info=%5B%7B%223%22%3A%7B%22readTime%22%3A3770%2C%22pay_status%22%3A0%7D%7D%5D&sp=-1'
 ];
 
 const qqreadtimehdArr = [
-  '{"Accept":"*/*","Content-Type":"application/json","ywsession":"2h1kzkug43ifp4554tbfpt31qii0snq0","Cookie":"ywguid=702779275;ywkey=ywSypQeTvohB;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=044C764583111D8C918398791CD44944","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
-  '{"Accept":"*/*","Content-Type":"application/json","ywsession":"ots34xdu7wtpdeqhe1mm68mr8evcuulj","Cookie":"ywguid=1924114809;ywkey=yw3tlz6fJDZS;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=C8E5A408199C21B1E520F8EA97334014","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
-  '{"Accept":"*/*","Content-Type":"application/json","ywsession":"xfufk71y9lpcpkxnym7l8hvspeoh23qn","Cookie":"ywguid=983061506;ywkey=ywvH5ClXFi5B;platform=ios;channel=mqqmina;mpVersion=0.30.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=ED2B73BDA9F7D308CACB600E2F7E2F2B","mpversion":"0.30.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.30.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}',
-  '{"Accept":"*/*","Content-Type":"application/json","ywsession":"o887lxxeb72p37rjizhgu2zepx1ssvze","Cookie":"ywguid=2535838714;ywkey=ywrNl1n80Xmb;platform=ios;channel=mqqmina;mpVersion=0.31.0;qq_ver=8.4.17;os_ver=iOS 14.2;mpos_ver=1.21.0;platform=ios;openid=4E396B9FCFC1A224F97DB350AB85ECD1","mpversion":"0.31.0","Connection":"keep-alive","Host":"mqqapi.reader.qq.com","User-Agent":"QQ/8.4.17.638 CFNetwork/1206 Darwin/20.1.0","Referer":"https://appservice.qq.com/1110657249/0.31.0/page-frame.html","Accept-Encoding":"gzip, deflate, br","Accept-Language":"zh-cn"}'
+  '{"cookie": "ywguid=702779275;ywkey=ywBQiSRjBXSo;platform=android;channel=mqqmina;mpVersion=0.36.0;qq_ver=8.4.18.4945;os_ver=Android 10;mpos_ver=1.21.0;platform=android;openid=044C764583111D8C918398791CD44944","referer": "https://appservice.qq.com/1110657249/0.36.0/page-frame.html","user-agent": "Mozilla%2F5.0+%28Linux%3B+Android+10%3B+Redmi+Note+8+Pro+Build%2FQP1A.190711.020%3B+wv%29+AppleWebKit%2F537.36+%28KHTML%2C+like+Gecko%29+Version%2F4.0+Chrome%2F83.0.4103.101+Mobile+Safari%2F537.36 QQ/8.4.18.4945 V1_AND_SQ_8.4.18_1558_YYB_D QQ/MiniApp","mpversion": "0.36.0","content-type": "application/json","ywsession": "93q2fl5jag6d47k0x271wa3qe8exe1kh","accept-encoding": "gzip"}',
+  '{"cookie": "ywguid=1762371855;ywkey=ywhPf4sPzRBT;platform=ios;channel=mqqmina;mpVersion=0.36.0;qq_ver=8.5.0;os_ver=iOS 14.2;mpos_ver=1.23.0;platform=ios;openid=1762371855","accept": "*/*","content-type": "application/json","ywsession": "y7v166m8hobomvpla00nn3ouu365i4vn","referer": "https://appservice.qq.com/1110657249/0.36.0/page-frame.html","accept-encoding": "gzip, deflate, br","user-agent": "QQ/8.5.0.635 CFNetwork/1206 Darwin/20.1.0","accept-language": "zh-cn","mpversion": "0.36.0"}',
+  '{"cookie": "ywguid=1924114809;ywkey=ywC6NMnLhFf5;platform=ios;channel=mqqmina;mpVersion=0.36.0;qq_ver=8.5.0;os_ver=iOS 14.2;mpos_ver=1.23.0;platform=ios;openid=C8E5A408199C21B1E520F8EA97334014","accept": "*/*","content-type": "application/json","ywsession": "uwvdv4rkrrgbk4q21f7x7170cugdcdwt","referer": "https://appservice.qq.com/1110657249/0.36.0/page-frame.html","accept-encoding": "gzip, deflate, br","user-agent": "QQ/8.5.0.635 CFNetwork/1206 Darwin/20.1.0","accept-language": "zh-cn","mpversion": "0.36.0"}',
+  '{"cookie": "ywguid=2535838714;ywkey=ywrNl1n80Xmb;platform=ios;channel=mqqmina;mpVersion=0.36.0;qq_ver=8.5.0;os_ver=iOS 14.2;mpos_ver=1.23.0;platform=ios;openid=4E396B9FCFC1A224F97DB350AB85ECD1","accept": "*/*","content-type": "application/json","ywsession": "kjq0cwl9byyeu8fz2u2sg6vi9q68nrwj","referer": "https://appservice.qq.com/1110657249/0.36.0/page-frame.html","accept-encoding": "gzip, deflate, br","user-agent": "QQ/8.5.0.635 CFNetwork/1206 Darwin/20.1.0","accept-language": "zh-cn","mpversion": "0.36.0"}',
+  '{"cookie": "ywguid=983061506;ywkey=ywvH5ClXFi5B;platform=ios;channel=mqqmina;mpVersion=0.36.0;qq_ver=8.5.0;os_ver=iOS 14.2;mpos_ver=1.23.0;platform=ios;openid=ED2B73BDA9F7D308CACB600E2F7E2F2B","accept": "*/*","content-type": "application/json","ywsession": "7a8uci3j6fdypxo5cwqvca7skpr5fz49","referer": "https://appservice.qq.com/1110657249/0.36.0/page-frame.html","accept-encoding": "gzip, deflate, br","user-agent": "QQ/8.5.0.635 CFNetwork/1206 Darwin/20.1.0","accept-language": "zh-cn","mpversion": "0.36.0"}'
 ];
 
 
-
-
-let K = 0;
 all();
 function all() {
   qqreadbodyVal = qqreadbdArr[K];
   qqreadtimeurlVal = qqreadtimeurlArr[K];
   qqreadtimeheaderVal = qqreadtimehdArr[K];
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 13; i++) {
     (function (i) {
       setTimeout(
         function () {
-          if (i == 0) {
-            qqreadinfo(); // 用户名
-            qqreadwktime(); // 周时长查询
-            qqreadconfig(); // 时长查询
-          } else if (i == 1) qqreadtask();
-		  else if (
-            i == 2) qqreadtrack();
-          // 任务列表
-          else if (
-            i == 3 &&
-            config.data &&
-            config.data.pageParams.todayReadSeconds / 3600 <= maxtime
-          )
-            qqreadtime();
-          // 上传时长
-          else if (i == 4 && task.data && task.data.taskList[1].doneFlag == 0)
-            qqreadssr1();
-          // 阅读金币1
-          else if (i == 5 && task.data && task.data.taskList[2].doneFlag == 0) {
-            qqreadsign(); // 金币签到
-            qqreadtake(); // 阅豆签到
-          } else if (i == 6 && task.data && task.data.treasureBox.doneFlag == 0)
-            qqreadbox();
-          // 宝箱
-          else if (i == 7 && task.data && task.data.taskList[0].doneFlag == 0)
-            qqreaddayread();
-          // 阅读任务
-          else if (i == 8 && task.data && task.data.taskList[1].doneFlag == 0)
-            qqreadssr2();
-          // 阅读金币2
-          else if (i == 9) qqreadpick();
-          // 领周时长奖励
-          else if (i == 10 && task.data && task.data.taskList[3].doneFlag == 0)
-            qqreadvideo();
-          // 视频任务
-          else if (i == 11 && task.data && task.data.taskList[2].doneFlag == 0)
-            qqreadsign2();
-          // 签到翻倍
-          else if (
-            i == 12 &&
-            task.data &&
-            task.data.treasureBox.videoDoneFlag == 0
-          )
-            qqreadbox2();
-          // 宝箱翻倍
-          else if (i == 13 && task.data && task.data.taskList[1].doneFlag == 0)
-            qqreadssr3();
-          // 阅读金币3
-          else if (i == 14 && K < qqreadbdArr.length - 1) {
-            K += 1;
-            all();
-          } else if (i == 14 && K == qqreadbdArr.length - 1) {
-            showmsg(); // 通知
-            $.done();
-          }
-        },
+          if (i == 0) 
+              qqreadinfo(); // 用户名
+          if (i == 1) {
+              qqreadwktime(); // 周时长查询
+              qqreadconfig(); // 时长查询
+              qqreadtrack();//更新
+   } else if (i == 2){
+        qqreadtask();// 任务列表
+          if (config.data &&config.data.pageParams.todayReadSeconds / 3600 <= maxtime)qqreadtime();   // 上传时长
+}     
+     else if (i == 3 ){
+              qqreadpick();// 领周时长奖励
+    if (task.data && task.data.taskList[0].doneFlag == 0)
+        qqreaddayread();// 阅读任务
+          if (task.data && task.data.taskList[1].doneFlag == 0)
+              qqreadssr1();// 阅读金币1
+          if (task.data && task.data.taskList[2].doneFlag == 0) {
+              qqreadsign(); // 金币签到
+              qqreadtake(); // 阅豆签到
+}    
+          if (task.data && task.data.taskList[3].doneFlag == 0)
+              qqreadvideo();// 视频任务 
+}
+     else if (i == 7 ){
+       if (task.data && task.data.treasureBox.doneFlag == 0)
+              qqreadbox();// 宝箱
+          if (task.data && task.data.taskList[1].doneFlag == 0)
+              qqreadssr2();// 阅读金币2
+          if (task.data && task.data.taskList[2].doneFlag == 0)
+              qqreadsign2();// 签到翻倍
+}    
+     else if (i == 8&&task.data && 
+task.data.user.amount >= 100000){
+          if ($.isNode()&&d.getHours() == 23)
+              qqreadwithdraw();//现金提现
+     else if (b.getHours() == 23)
+              qqreadwithdraw();//现金提现
+}
+
+     else if (i == 9){
+          if ($.isNode()&&d.getHours() == 23 && d.getMinutes() >= 40)
+              qqreadtrans();//今日收益累计
+    else  if (b.getHours() == 23 && b.getMinutes() >= 40)
+              qqreadtrans();//今日收益累计
+}
+     else if (i == 11 ){   
+          if (task.data && task.data.treasureBox.videoDoneFlag == 0)
+              qqreadbox2();// 宝箱翻倍
+    if (task.data && task.data.taskList[1].doneFlag == 0)
+              qqreadssr3();// 阅读金币3
+}    
+     else if (i == 12){  
+       if ( K < qqreadbdArr.length - 1) {
+              K += 1;
+              all();
+}    else if (K == qqreadbdArr.length - 1) {
+              showmsg(); // 通知
+              $.done();
+  }
+ }
+},
 
         (i + 1) * dd * 1000
       );
     })(i);
   }
 }
+
+
 
 // 任务列表
 function qqreadtask() {
@@ -218,6 +253,37 @@ function qqreadtask() {
 }
 
 
+
+
+
+
+
+// 金币统计
+function qqreadtrans() {
+  return new Promise((resolve, reject) => {  
+for(var y=1;y<9;y++){
+     let day=0;
+    const toqqreadtransurl = { 
+      url: "https://mqqapi.reader.qq.com/mqq/red_packet/user/trans/list?pn="+y, 
+      headers: JSON.parse(qqreadtimeheaderVal), 
+      timeout: 60000, 
+    };
+    $.get(toqqreadtransurl, (error, response, data) => {
+      if (logs) $.log(`${jsname}, 今日收益: ${data}`);
+      trans = JSON.parse(data);
+    for(var i=0;i<20;i++){
+if(trans.data.list[i].createTime>=daytime)
+  day+=trans.data.list[i].amount;
+}
+tz+="【今日收益】:获得"+day+'\n'	    
+resolve();
+      });
+     }
+  });
+}
+
+
+
 // 更新
 function qqreadtrack() {
   return new Promise((resolve, reject) => {
@@ -232,6 +298,26 @@ function qqreadtrack() {
       if (logs) $.log(`${jsname}, 更新: ${data}`);
       track = JSON.parse(data);
 	 tz += `【数据更新】:更新${track.msg}\n`;
+      resolve();
+    });
+  });
+}
+
+
+//提现
+function qqreadwithdraw() {
+  return new Promise((resolve, reject) => {
+    const toqqreadwithdrawurl = {
+      url: "https://mqqapi.reader.qq.com/mqq/red_packet/user/withdraw?amount=100000",
+      headers: JSON.parse(qqreadtimeheaderVal),
+      timeout: 60000,
+    };
+    $.post(toqqreadwithdrawurl, (error, response, data) => {
+      if (logs) $.log(`${jsname}, 提现: ${data}`);
+      withdraw = JSON.parse(data);
+if(withdraw.data.code==0)
+      tz += `【现金提现】:成功提现10元\n`;
+      kz += `【现金提现】:成功提现10元\n`;
       resolve();
     });
   });
@@ -567,17 +653,21 @@ function qqreadpick() {
 }
 
 function showmsg() {
+	
+	if ($.isNode()) {
   tz += `\n\n========= 脚本执行-北京时间(UTC+8)：${new Date(
     new Date().getTime() + 8 * 60 * 60 * 1000
   ).toLocaleString()} \n\n`;
-
-  const d = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
-  if (
-    (d.getHours() == 12 && d.getMinutes() <= 20) ||
-    (d.getHours() == 23 && d.getMinutes() >= 40)
-  ) {
-    notify.sendNotify(jsname, kz);
-  }
+}else tz += `\n\n========= 脚本执行-北京时间(UTC+8)：${new Date(
+    new Date().getTime()
+  ).toLocaleString()} \n\n`;
+  
+  // if (
+  //   (d.getHours() == 12 && d.getMinutes() <= 20) ||
+  //   (d.getHours() == 23 && d.getMinutes() >= 40)
+  // ) {
+  //   notify.sendNotify(jsname, kz);
+  // }
 
   if (notifyInterval != 1) console.log(tz); // 无通知时，打印通知
 
@@ -598,8 +688,11 @@ function showmsg() {
     task.data.treasureBox.count == 60
   )
     $.msg(jsname, "", tz); // 宝箱每15次通知一次
-}
 
+
+
+
+}
 
 // prettier-ignore
 function Env(t,e){class s{constructor(t){this.env=t}send(t,e="GET"){t="string"==typeof t?{url:t}:t;let s=this.get;return"POST"===e&&(s=this.post),new Promise((e,i)=>{s.call(this,t,(t,s,r)=>{t?i(t):e(s)})})}get(t){return this.send.call(this.env,t)}post(t){return this.send.call(this.env,t,"POST")}}return new class{constructor(t,e){this.name=t,this.http=new s(this),this.data=null,this.dataFile="box.dat",this.logs=[],this.isMute=!1,this.isNeedRewrite=!1,this.logSeparator="\n",this.startTime=(new Date).getTime(),Object.assign(this,e),this.log("",`\ud83d\udd14${this.name}, \u5f00\u59cb!`)}isNode(){return"undefined"!=typeof module&&!!module.exports}isQuanX(){return"undefined"!=typeof $task}isSurge(){return"undefined"!=typeof $httpClient&&"undefined"==typeof $loon}isLoon(){return"undefined"!=typeof $loon}toObj(t,e=null){try{return JSON.parse(t)}catch{return e}}toStr(t,e=null){try{return JSON.stringify(t)}catch{return e}}getjson(t,e){let s=e;const i=this.getdata(t);if(i)try{s=JSON.parse(this.getdata(t))}catch{}return s}setjson(t,e){try{return this.setdata(JSON.stringify(t),e)}catch{return!1}}getScript(t){return new Promise(e=>{this.get({url:t},(t,s,i)=>e(i))})}runScript(t,e){return new Promise(s=>{let i=this.getdata("@chavy_boxjs_userCfgs.httpapi");i=i?i.replace(/\n/g,"").trim():i;let r=this.getdata("@chavy_boxjs_userCfgs.httpapi_timeout");r=r?1*r:20,r=e&&e.timeout?e.timeout:r;const[o,h]=i.split("@"),a={url:`http://${h}/v1/scripting/evaluate`,body:{script_text:t,mock_type:"cron",timeout:r},headers:{"X-Key":o,Accept:"*/*"}};this.post(a,(t,e,i)=>s(i))}).catch(t=>this.logErr(t))}loaddata(){if(!this.isNode())return{};{this.fs=this.fs?this.fs:require("fs"),this.path=this.path?this.path:require("path");const t=this.path.resolve(this.dataFile),e=this.path.resolve(process.cwd(),this.dataFile),s=this.fs.existsSync(t),i=!s&&this.fs.existsSync(e);if(!s&&!i)return{};{const i=s?t:e;try{return JSON.parse(this.fs.readFileSync(i))}catch(t){return{}}}}}writedata(){if(this.isNode()){this.fs=this.fs?this.fs:require("fs"),this.path=this.path?this.path:require("path");const t=this.path.resolve(this.dataFile),e=this.path.resolve(process.cwd(),this.dataFile),s=this.fs.existsSync(t),i=!s&&this.fs.existsSync(e),r=JSON.stringify(this.data);s?this.fs.writeFileSync(t,r):i?this.fs.writeFileSync(e,r):this.fs.writeFileSync(t,r)}}lodash_get(t,e,s){const i=e.replace(/\[(\d+)\]/g,".$1").split(".");let r=t;for(const t of i)if(r=Object(r)[t],void 0===r)return s;return r}lodash_set(t,e,s){return Object(t)!==t?t:(Array.isArray(e)||(e=e.toString().match(/[^.[\]]+/g)||[]),e.slice(0,-1).reduce((t,s,i)=>Object(t[s])===t[s]?t[s]:t[s]=Math.abs(e[i+1])>>0==+e[i+1]?[]:{},t)[e[e.length-1]]=s,t)}getdata(t){let e=this.getval(t);if(/^@/.test(t)){const[,s,i]=/^@(.*?)\.(.*?)$/.exec(t),r=s?this.getval(s):"";if(r)try{const t=JSON.parse(r);e=t?this.lodash_get(t,i,""):e}catch(t){e=""}}return e}setdata(t,e){let s=!1;if(/^@/.test(e)){const[,i,r]=/^@(.*?)\.(.*?)$/.exec(e),o=this.getval(i),h=i?"null"===o?null:o||"{}":"{}";try{const e=JSON.parse(h);this.lodash_set(e,r,t),s=this.setval(JSON.stringify(e),i)}catch(e){const o={};this.lodash_set(o,r,t),s=this.setval(JSON.stringify(o),i)}}else s=this.setval(t,e);return s}getval(t){return this.isSurge()||this.isLoon()?$persistentStore.read(t):this.isQuanX()?$prefs.valueForKey(t):this.isNode()?(this.data=this.loaddata(),this.data[t]):this.data&&this.data[t]||null}setval(t,e){return this.isSurge()||this.isLoon()?$persistentStore.write(t,e):this.isQuanX()?$prefs.setValueForKey(t,e):this.isNode()?(this.data=this.loaddata(),this.data[e]=t,this.writedata(),!0):this.data&&this.data[e]||null}initGotEnv(t){this.got=this.got?this.got:require("got"),this.cktough=this.cktough?this.cktough:require("tough-cookie"),this.ckjar=this.ckjar?this.ckjar:new this.cktough.CookieJar,t&&(t.headers=t.headers?t.headers:{},void 0===t.headers.Cookie&&void 0===t.cookieJar&&(t.cookieJar=this.ckjar))}get(t,e=(()=>{})){t.headers&&(delete t.headers["Content-Type"],delete t.headers["Content-Length"]),this.isSurge()||this.isLoon()?(this.isSurge()&&this.isNeedRewrite&&(t.headers=t.headers||{},Object.assign(t.headers,{"X-Surge-Skip-Scripting":!1})),$httpClient.get(t,(t,s,i)=>{!t&&s&&(s.body=i,s.statusCode=s.status),e(t,s,i)})):this.isQuanX()?(this.isNeedRewrite&&(t.opts=t.opts||{},Object.assign(t.opts,{hints:!1})),$task.fetch(t).then(t=>{const{statusCode:s,statusCode:i,headers:r,body:o}=t;e(null,{status:s,statusCode:i,headers:r,body:o},o)},t=>e(t))):this.isNode()&&(this.initGotEnv(t),this.got(t).on("redirect",(t,e)=>{try{if(t.headers["set-cookie"]){const s=t.headers["set-cookie"].map(this.cktough.Cookie.parse).toString();this.ckjar.setCookieSync(s,null),e.cookieJar=this.ckjar}}catch(t){this.logErr(t)}}).then(t=>{const{statusCode:s,statusCode:i,headers:r,body:o}=t;e(null,{status:s,statusCode:i,headers:r,body:o},o)},t=>{const{message:s,response:i}=t;e(s,i,i&&i.body)}))}post(t,e=(()=>{})){if(t.body&&t.headers&&!t.headers["Content-Type"]&&(t.headers["Content-Type"]="application/x-www-form-urlencoded"),t.headers&&delete t.headers["Content-Length"],this.isSurge()||this.isLoon())this.isSurge()&&this.isNeedRewrite&&(t.headers=t.headers||{},Object.assign(t.headers,{"X-Surge-Skip-Scripting":!1})),$httpClient.post(t,(t,s,i)=>{!t&&s&&(s.body=i,s.statusCode=s.status),e(t,s,i)});else if(this.isQuanX())t.method="POST",this.isNeedRewrite&&(t.opts=t.opts||{},Object.assign(t.opts,{hints:!1})),$task.fetch(t).then(t=>{const{statusCode:s,statusCode:i,headers:r,body:o}=t;e(null,{status:s,statusCode:i,headers:r,body:o},o)},t=>e(t));else if(this.isNode()){this.initGotEnv(t);const{url:s,...i}=t;this.got.post(s,i).then(t=>{const{statusCode:s,statusCode:i,headers:r,body:o}=t;e(null,{status:s,statusCode:i,headers:r,body:o},o)},t=>{const{message:s,response:i}=t;e(s,i,i&&i.body)})}}time(t){let e={"M+":(new Date).getMonth()+1,"d+":(new Date).getDate(),"H+":(new Date).getHours(),"m+":(new Date).getMinutes(),"s+":(new Date).getSeconds(),"q+":Math.floor(((new Date).getMonth()+3)/3),S:(new Date).getMilliseconds()};/(y+)/.test(t)&&(t=t.replace(RegExp.$1,((new Date).getFullYear()+"").substr(4-RegExp.$1.length)));for(let s in e)new RegExp("("+s+")").test(t)&&(t=t.replace(RegExp.$1,1==RegExp.$1.length?e[s]:("00"+e[s]).substr((""+e[s]).length)));return t}msg(e=t,s="",i="",r){const o=t=>{if(!t)return t;if("string"==typeof t)return this.isLoon()?t:this.isQuanX()?{"open-url":t}:this.isSurge()?{url:t}:void 0;if("object"==typeof t){if(this.isLoon()){let e=t.openUrl||t.url||t["open-url"],s=t.mediaUrl||t["media-url"];return{openUrl:e,mediaUrl:s}}if(this.isQuanX()){let e=t["open-url"]||t.url||t.openUrl,s=t["media-url"]||t.mediaUrl;return{"open-url":e,"media-url":s}}if(this.isSurge()){let e=t.url||t.openUrl||t["open-url"];return{url:e}}}};this.isMute||(this.isSurge()||this.isLoon()?$notification.post(e,s,i,o(r)):this.isQuanX()&&$notify(e,s,i,o(r)));let h=["","==============\ud83d\udce3\u7cfb\u7edf\u901a\u77e5\ud83d\udce3=============="];h.push(e),s&&h.push(s),i&&h.push(i),console.log(h.join("\n")),this.logs=this.logs.concat(h)}log(...t){t.length>0&&(this.logs=[...this.logs,...t]),console.log(t.join(this.logSeparator))}logErr(t,e){const s=!this.isSurge()&&!this.isQuanX()&&!this.isLoon();s?this.log("",`\u2757\ufe0f${this.name}, \u9519\u8bef!`,t.stack):this.log("",`\u2757\ufe0f${this.name}, \u9519\u8bef!`,t)}wait(t){return new Promise(e=>setTimeout(e,t))}done(t={}){const e=(new Date).getTime(),s=(e-this.startTime)/1e3;this.log("",`\ud83d\udd14${this.name}, \u7ed3\u675f! \ud83d\udd5b ${s} \u79d2`),this.log(),(this.isSurge()||this.isQuanX()||this.isLoon())&&$done(t)}}(t,e)}
